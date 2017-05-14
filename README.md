@@ -3,11 +3,14 @@ Here are Dockerfiles to get you up and running with a fully functional deep lear
 
 If you are not familiar with Docker, but would still like an all-in-one solution, start here: [What is Docker?](#what-is-docker). If you know what Docker is, but are wondering why we need one for deep learning, [see this](#why-do-i-need-a-docker)
 
+## Update: I've built a quick tool, based on dl-docker, to run your DL project on the cloud with zero setup. You can start running your Tensorflow project on AWS in <30seconds using Floyd. See [www.floydhub.com](https://www.floydhub.com). It's free to try out. 
+### Happy to take feature requests/feedback and answer questions - mail me sai@floydhub.com.
+
 ## Specs
 This is what you get out of the box when you create a container with the provided image/Dockerfile:
 * Ubuntu 14.04
-* [CUDA 7.5](https://developer.nvidia.com/cuda-toolkit) (GPU version only)
-* [cuDNN v4](https://developer.nvidia.com/cudnn) (GPU version only)
+* [CUDA 8.0](https://developer.nvidia.com/cuda-toolkit) (GPU version only)
+* [cuDNN v5](https://developer.nvidia.com/cudnn) (GPU version only)
 * [Tensorflow](https://www.tensorflow.org/)
 * [Caffe](http://caffe.berkeleyvision.org/)
 * [Theano](http://deeplearning.net/software/theano/)
@@ -16,6 +19,7 @@ This is what you get out of the box when you create a container with the provide
 * [Torch](http://torch.ch/) (includes nn, cutorch, cunn and cuDNN bindings)
 * [iPython/Jupyter Notebook](http://jupyter.org/) (including iTorch kernel)
 * [Numpy](http://www.numpy.org/), [SciPy](https://www.scipy.org/), [Pandas](http://pandas.pydata.org/), [Scikit Learn](http://scikit-learn.org/), [Matplotlib](http://matplotlib.org/)
+* [OpenCV](http://opencv.org/)
 * A few common libraries used for deep learning
 
 ## Setup
@@ -49,12 +53,12 @@ cd dl-docker
 
 **CPU Version**
 ```bash
-docker build -t dl-docker:cpu -f Dockerfile.cpu .
+docker build -t floydhub/dl-docker:cpu -f Dockerfile.cpu .
 ```
 
 **GPU Version**
 ```bash
-docker build -t dl-docker:gpu -f Dockerfile.gpu .
+docker build -t floydhub/dl-docker:gpu -f Dockerfile.gpu .
 ```
 This will build a Docker image named `dl-docker` and tagged either `cpu` or `gpu` depending on the tag your specify. Also note that the appropriate `Dockerfile.<architecture>` has to be used.
 
@@ -63,12 +67,12 @@ Once we've built the image, we have all the frameworks we need installed in it. 
 
 **CPU Version**
 ```bash
-docker run -it -p 8888:8888 -p 6006:6006 -v /sharedfolder:/root/sharedfolder dl-docker:cpu bash
+docker run -it -p 8888:8888 -p 6006:6006 -v /sharedfolder:/root/sharedfolder floydhub/dl-docker:cpu bash
 ```
 	
 **GPU Version**
 ```bash
-nvidia-docker run -it -p 8888:8888 -p 6006:6006 -v /sharedfolder:/root/sharedfolder dl-docker:gpu bash
+nvidia-docker run -it -p 8888:8888 -p 6006:6006 -v /sharedfolder:/root/sharedfolder floydhub/dl-docker:gpu bash
 ```
 Note the use of `nvidia-docker` rather than just `docker`
 
@@ -77,14 +81,22 @@ Note the use of `nvidia-docker` rather than just `docker`
 |`-it`             | This creates an interactive terminal you can use to iteract with your container |
 |`-p 8888:8888 -p 6006:6006`    | This exposes the ports inside the container so they can be accessed from the host. The format is `-p <host-port>:<container-port>`. The default iPython Notebook runs on port 8888 and Tensorboard on 6006 |
 |`-v /sharedfolder:/root/sharedfolder/` | This shares the folder `/sharedfolder` on your host machine to `/root/sharedfolder/` inside your container. Any data written to this folder by the container will be persistent. You can modify this to anything of the format `-v /local/shared/folder:/shared/folder/in/container/`. See [Docker container persistence](#docker-container-persistence)
-|`dl-docker:cpu`   | This the image that you want to run. The format is `image:tag`. In our case, we use the image `dl-docker` and tag `gpu` or `cpu` to spin up the appropriate image |
-|`bash`       | This provides the default command when the container is started. Even if this was not provided, bash is the default command and just starts a Bash session. You can modify this to be whatever you'd like to be executed when your container starts. For example, you can execute `docker run -it -p 8888:8888 -p 6006:6006 dl-docker:cpu jupyter notebook`. This will execute the command `jupyter notebook` and starts your Jupyter Notebook for you when the container starts
+|`floydhub/dl-docker:cpu`   | This the image that you want to run. The format is `image:tag`. In our case, we use the image `dl-docker` and tag `gpu` or `cpu` to spin up the appropriate image |
+|`bash`       | This provides the default command when the container is started. Even if this was not provided, bash is the default command and just starts a Bash session. You can modify this to be whatever you'd like to be executed when your container starts. For example, you can execute `docker run -it -p 8888:8888 -p 6006:6006 floydhub/dl-docker:cpu jupyter notebook`. This will execute the command `jupyter notebook` and starts your Jupyter Notebook for you when the container starts
 
 ## Some common scenarios
 ### Jupyter Notebooks
 The container comes pre-installed with iPython and iTorch Notebooks, and you can use these to work with the deep learning frameworks. If you spin up the docker container with `docker-run -p <host-port>:<container-port>` (as shown above in the [instructions](#running-the-docker-image-as-a-container)), you will have access to these ports on your host and can access them at `http://127.0.0.1:<host-port>`. The default iPython notebook uses port 8888 and Tensorboard uses port 6006. Since we expose both these ports when we run the container, we can access them both from the localhost.
 
-However, you still need to start the Notebook inside the container to be able to access it from the host. You can either do this from the container terminal by executing `jupyter notebook` or you can pass this command in directly while spinning up your container using the `docker run -it -p 8888:8888 -p 6006:6006 dl-docker:cpu jupyter notebook` CLI. The Jupyter Notebook has both Python (for TensorFlow, Caffe, Theano, Keras, Lasagne) and iTorch (for Torch) kernels.
+However, you still need to start the Notebook inside the container to be able to access it from the host. You can either do this from the container terminal by executing `jupyter notebook` or you can pass this command in directly while spinning up your container using the `docker run -it -p 8888:8888 -p 6006:6006 floydhub/dl-docker:cpu jupyter notebook` CLI. The Jupyter Notebook has both Python (for TensorFlow, Caffe, Theano, Keras, Lasagne) and iTorch (for Torch) kernels.
+
+Note: If you are setting the notebook on Windows, you will need to first determine the IP address of your Docker container. This command on the Docker command-line provides the IP address
+```bash
+docker-machine ip default
+> <IP-address>
+```
+```default``` is the name of the container provided by default to the container you will spin. 
+On obtaining the IP-address, run the docker as per the [instructions](#running-the-docker-image-as-a-container) provided and start the Jupyter notebook as [described above](#jupyter-notebooks). Then accessing ```http://<IP-address>:<host-port>``` on your host's browser should show you the notebook.
 
 ### Data Sharing
 See [Docker container persistence](#docker-container-persistence). 
@@ -125,7 +137,7 @@ Keep in mind that the changes made inside Docker container are not persistent. L
 ### How do I update/install new libraries?
 You can do one of:
 
-1. Modify the `Dockerfile` directly to install new or update your existing libraries. You will need to do a `docker build` after you do this. If you just want to update to a newer version of the DL framework(s), you can pass them as CLI parameter using the --build-arg tag ([see](-v /sharedfolder:/root/sharedfolder) for details). The framework versions are defined at the top of the `Dockerfile`. For example, `docker build -t dl-docker:cpu -f Dockerfile.cpu --build-arg TENSORFLOW_VERSION=0.9.0rc0 .`
+1. Modify the `Dockerfile` directly to install new or update your existing libraries. You will need to do a `docker build` after you do this. If you just want to update to a newer version of the DL framework(s), you can pass them as CLI parameter using the --build-arg tag ([see](-v /sharedfolder:/root/sharedfolder) for details). The framework versions are defined at the top of the `Dockerfile`. For example, `docker build -t floydhub/dl-docker:cpu -f Dockerfile.cpu --build-arg TENSORFLOW_VERSION=0.9.0rc0 .`
 
 2. You can log in to a container and install the frameworks interactively using the terminal. After you've made sure everything looks good, you can commit the new contains and store it as an image
 
